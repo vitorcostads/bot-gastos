@@ -4,6 +4,7 @@ import asyncio
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
 from telegram import Update
 from telegram.ext import filters
+import json
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -19,7 +20,11 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
+
+
+creds_dict = json.loads(os.getenv("GOOGLE_CREDS"))
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
 client = gspread.authorize(creds)
 sheet = client.open("Gastos").worksheet("Conjunto")
 

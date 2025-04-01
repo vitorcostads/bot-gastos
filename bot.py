@@ -11,7 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # Carrega variáveis do .env
 from dotenv import load_dotenv
-load_dotenv(dotenv_path="tks.env")
+load_dotenv(dotenv_path=".env")
 
 # ----------------- CONFIGS DO GOOGLE SHEETS -------------------
 
@@ -26,7 +26,8 @@ creds_dict = json.loads(os.getenv("GOOGLE_CREDS"))
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 
 client = gspread.authorize(creds)
-sheet = client.open("Gastos").worksheet("Conjunto")
+sheet = client.open_by_key("1aYOOLnObtt4-_REuwQhgoWDfSgG7Ox4yaTLjVHgDwoI").worksheet("Conjunto")
+
 
 # ----------------- CONFIGS DO TELEGRAM -------------------
 
@@ -46,7 +47,7 @@ async def registrar_gasto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         mes = partes[0].capitalize()
-        id_categoria = partes[1]
+        id_categoria = partes[1].capitalize()
         valor_str = partes[-1].replace(",", ".")
         valor = float(valor_str)
         motivo = " ".join(partes[2:-1]) if len(partes) > 3 else ""
@@ -66,7 +67,7 @@ async def registrar_gasto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         proxima_linha = len(col_id_values) + 1
 
         sheet.update_cell(proxima_linha, col_id, id_categoria)
-        sheet.update_cell(proxima_linha, col_valor, f"R$ {valor:.2f}")
+        sheet.update_cell(proxima_linha, col_valor, valor)
         if motivo:
             sheet.update_cell(proxima_linha, col_motivo, motivo)
 
@@ -82,12 +83,17 @@ async def registrar_gasto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ----------------- EXECUÇÃO DO BOT -------------------
 
-async def main():
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, registrar_gasto))
 
-    print("Bot rodando... Ctrl + C para parar.")
-    await app.run_polling()
+
+
+def main():
+    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    handler = MessageHandler(filters.TEXT & (~filters.COMMAND), registrar_gasto)
+    application.add_handler(handler)
+
+    print("Bot está rodando...")
+    application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+
